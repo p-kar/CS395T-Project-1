@@ -30,17 +30,17 @@ def get_args():
      parser.add_argument('--wd', default=1e-4, type=float, help='weight decay (default: 1e-4)')
      parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
      parser.add_argument('--epochs', default=90, type=int, help='number of total epochs to run')
-     parser.add_argument('--max_norm', type=float, default=1, help='Max grad norm')
-     parser.add_argument('--lr_decay_step', type=int, default=45, help='learning rate decay step (after how many epochs)')
-     parser.add_argument('--lr_decay_gamma', type=float, default=0.1, help='learning rate decay gamma')
+     parser.add_argument('--max_norm', default=1, type=float, help='Max grad norm')
+     parser.add_argument('--lr_decay_step', default=45, type=int, help='learning rate decay step (after how many epochs)')
+     parser.add_argument('--lr_decay_gamma', default=0.1, type=float, help='learning rate decay gamma')
 
-     parser.add_argument('--start-epoch', default=0, type=int, help='manual epoch number (useful on restarts)')
+     parser.add_argument('--start_epoch', default=0, type=int, help='manual epoch number (useful on restarts)')
 
      # Save Parameter
-     parser.add_argument('--save_path', type=str, default='./trained_models', help='Directory where models are saved')
+     parser.add_argument('--save_path', default='./trained_models', type=str, help='Directory where models are saved')
 
      # Other
-     parser.add_argument('--log_dir', default='./logs', help='Directory where tensorboardX logs are saved')
+     parser.add_argument('--log_dir', default='./logs', type=str, help='Directory where tensorboardX logs are saved')
      parser.add_argument('--log_iter', default=10, type=int, help='print frequency (default: 10)')
      parser.add_argument('--resume', default=False, type=str2bool, help='path to latest checkpoint (default: none)')
      parser.add_argument('--seed', default=123, type=int, help='seed for initializing training')
