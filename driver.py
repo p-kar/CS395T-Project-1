@@ -15,6 +15,7 @@ import torch.optim
 from torch.utils.data import DataLoader
 
 from models.resnet import ResNet, BasicBlock
+from models.alexnet import AlexNet
 from utils.dataset import YearBookDataset
 from utils.misc import set_random_seeds
 from utils.arguments import get_args
@@ -29,6 +30,10 @@ def evaluate_model(opts, model, loader, criterion):
     num_batches = 0.0
 
     for i, d in enumerate(loader):
+        if opts.target_type == 'regression':
+            d['label'] = d['label'].float() / opts.nclasses
+            d['label'] = d['label'].unsqueeze(1)
+
         if use_cuda:
             d['image'] = d['image'].cuda()
             d['label'] = d['label'].cuda()
@@ -54,11 +59,17 @@ def train(opts):
 
     if opts.arch == 'resnet18':
         model = ResNet(block=BasicBlock, layers=[2, 2, 2, 2], num_classes=opts.nclasses, mode=opts.target_type)
+    elif opts.arch == 'resnet34':
+        model = ResNet(block=BasicBlock, layers=[3, 4, 6, 3], num_classes=opts.nclasses, mode=opts.target_type)
+    elif opts.arch == 'alexnet':
+        model = AlexNet(num_classes=opts.nclasses, mode=opts.target_type)
     else:
         raise NotImplementedError('Unsupported model architecture')
 
     if opts.target_type == 'classification':
         criterion = nn.CrossEntropyLoss()
+    elif opts.target_type == 'regression':
+        criterion = nn.MSELoss()
     else:
         raise NotImplementedError('Unknown model target type')
 
@@ -73,6 +84,8 @@ def train(opts):
     else:
         raise NotImplementedError('Unknown optimizer type')
 
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=opts.lr_decay_step, gamma=opts.lr_decay_gamma)
+
     # for logging
     n_iter = 0
     writer = SummaryWriter(log_dir=opts.log_dir)
@@ -85,7 +98,12 @@ def train(opts):
 
     for epoch in range(opts.start_epoch, opts.epochs):
         model.train()
+        scheduler.step()
         for i, d in enumerate(train_loader):
+            if opts.target_type == 'regression':
+                d['label'] = d['label'].float() / opts.nclasses
+                d['label'] = d['label'].unsqueeze(1)
+
             if use_cuda:
                 d['image'] = d['image'].cuda()
                 d['label'] = d['label'].cuda()
@@ -109,7 +127,7 @@ def train(opts):
                 time_taken = time_end - time_start
                 avg_train_loss = loss_log['train/loss'] / num_batches
 
-                print ("epoch: %d, updates: %d, time: %.2f, avg_train_loss: %.4f" % (epoch, n_iter, time_taken, avg_train_loss))
+                print ("epoch: %d, updates: %d, time: %.2f, avg_train_loss: %.5f" % (epoch, n_iter, time_taken, avg_train_loss))
                 # writing values to SummaryWriter
                 writer.add_scalar('train/loss', avg_train_loss, n_iter)
                 # reset values back
@@ -118,7 +136,7 @@ def train(opts):
                 time_start = time.time()
 
         val_loss, time_taken = evaluate_model(opts, model, valid_loader, criterion)
-        print ("epoch: %d, updates: %d, time: %.2f, avg_valid_loss: %.4f" % (epoch, n_iter, time_taken, val_loss))
+        print ("epoch: %d, updates: %d, time: %.2f, avg_valid_loss: %.5f" % (epoch, n_iter, time_taken, val_loss))
         # writing values to SummaryWriter
         writer.add_scalar('val/loss', val_loss, n_iter)
         print ('')

@@ -25,13 +25,14 @@ def get_args():
      parser.add_argument('--target_type', default='classification', type=str, help='target is classification or regression')
 
      # Optimization Parameters
-     parser.add_argument('--optim', default='sgd', type=str, help='Optimizer type')
-     parser.add_argument('--lr', default=0.1, type=float, help='initial learning rate')
+     parser.add_argument('--optim', default='adam', type=str, help='Optimizer type')
+     parser.add_argument('--lr', default=1e-3, type=float, help='initial learning rate')
      parser.add_argument('--wd', default=1e-4, type=float, help='weight decay (default: 1e-4)')
      parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
      parser.add_argument('--epochs', default=90, type=int, help='number of total epochs to run')
      parser.add_argument('--max_norm', type=float, default=1, help='Max grad norm')
-     parser.add_argument('--lr_decay', type=str, default='', help='learning rate decay schedule')
+     parser.add_argument('--lr_decay_step', type=int, default=45, help='learning rate decay step (after how many epochs)')
+     parser.add_argument('--lr_decay_gamma', type=float, default=0.1, help='learning rate decay gamma')
 
      parser.add_argument('--start-epoch', default=0, type=int, help='manual epoch number (useful on restarts)')
 

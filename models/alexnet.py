@@ -12,7 +12,7 @@ model_urls = {
 
 class AlexNet(nn.Module):
 
-    def __init__(self, num_classes=1000):
+    def __init__(self, num_classes=1000, mode='classification'):
         super(AlexNet, self).__init__()
         self.features = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=11, stride=4, padding=2),
@@ -36,13 +36,21 @@ class AlexNet(nn.Module):
             nn.Dropout(),
             nn.Linear(4096, 4096),
             nn.ReLU(inplace=True),
-            nn.Linear(4096, num_classes),
         )
+
+        if mode not in ['classification', 'regression']:
+            raise NotImplementedError('Unrecognized model mode')
+
+        if mode == 'classification':
+            self.pred_layer = nn.Linear(4096, num_classes)
+        else:
+            self.pred_layer = nn.Linear(4096, 1)
 
     def forward(self, x):
         x = self.features(x)
         x = x.view(x.size(0), 256 * 6 * 6)
         x = self.classifier(x)
+        x = self.pred_layer(x)
         return x
 
 
