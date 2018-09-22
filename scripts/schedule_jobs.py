@@ -17,8 +17,8 @@ mapping_dict = {
     '__BSIZE__': '32',
     '__SHUFFLE__': 'True',
     '__NCLASSES__': '120',
-    '__ARCH__': 'resnet18',
-    '__TARGET_TYPE__': 'classification',
+    '__ARCH__': ['resnet18', 'resnet18', 'resnet34', 'resnet34', 'alexnet', 'alexnet'],
+    '__TARGET_TYPE__': ['classification', 'regression', 'classification', 'regression', 'classification', 'regression'],
     '__OPTIM__': 'adam',
     '__LR__': '1e-3',
     '__WD__': '1e-4',
@@ -35,7 +35,7 @@ mapping_dict = {
 
 # Figure out number of jobs to run
 num_jobs = 1
-for key, value in mapping_dict.iteritems():
+for key, value in mapping_dict.items():
     if type(value) == type([]):
         if num_jobs == 1:
             num_jobs = len(value)
@@ -52,7 +52,7 @@ for idx in range(num_jobs):
     script_path = os.path.join(mapping_dict['__SAVE_PATH__'], 'run_script.sh')
     sp.call('cp %s %s'%(os.path.join(SCRIPT_ROOT, 'condor_script_proto.sh'), condor_script_path), shell=True)
     sp.call('cp %s %s'%(os.path.join(SCRIPT_ROOT, 'run_proto.sh'), script_path), shell=True)
-    for key, value in mapping_dict.iteritems():
+    for key, value in mapping_dict.items():
         if type(value) == type([]):
             sp.call('sed -i "s#%s#%s#g" %s'%(key, value[idx], script_path), shell=True)
             sp.call('sed -i "s#%s#%s#g" %s'%(key, value[idx], condor_script_path), shell=True)

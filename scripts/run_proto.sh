@@ -18,7 +18,7 @@ python -u $code_root/driver.py \
 	--max_norm __MAX_NORM__ \
 	--lr_decay_step __LR_DECAY_STEP__ \
 	--lr_decay_gamma __LR_DECAY_GAMMA__ \
-	--start-epoch __START_EPOCH__ \
+	--start_epoch __START_EPOCH__ \
 	--save_path __SAVE_PATH__ \
 	--log_dir __LOG_DIR__ \
 	--log_iter __LOG_ITER__ \
