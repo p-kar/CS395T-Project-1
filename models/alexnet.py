@@ -1,3 +1,4 @@
+import pdb
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 
@@ -29,6 +30,10 @@ class AlexNet(nn.Module):
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2),
         )
+
+        if mode not in ['classification', 'regression']:
+            raise NotImplementedError('Unrecognized model mode')
+
         self.classifier = nn.Sequential(
             nn.Dropout(),
             nn.Linear(256 * 6 * 6, 4096),
@@ -36,32 +41,32 @@ class AlexNet(nn.Module):
             nn.Dropout(),
             nn.Linear(4096, 4096),
             nn.ReLU(inplace=True),
+            nn.Linear(4096, num_classes if mode == 'classification' else 1)
         )
-
-        if mode not in ['classification', 'regression']:
-            raise NotImplementedError('Unrecognized model mode')
-
-        if mode == 'classification':
-            self.pred_layer = nn.Linear(4096, num_classes)
-        else:
-            self.pred_layer = nn.Linear(4096, 1)
 
     def forward(self, x):
         x = self.features(x)
         x = x.view(x.size(0), 256 * 6 * 6)
         x = self.classifier(x)
-        x = self.pred_layer(x)
         return x
 
 
-def alexnet(pretrained=False, **kwargs):
+def alexnet(pretrained=False, target_type='regression', **kwargs):
     r"""AlexNet model architecture from the
     `"One weird trick..." <https://arxiv.org/abs/1404.5997>`_ paper.
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = AlexNet(**kwargs)
+    model = AlexNet(mode=target_type, **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['alexnet']))
+        pre_model = AlexNet(num_classes=1000)
+        pre_model.load_state_dict(model_zoo.load_url(model_urls['alexnet']))
+
+        pretrained_dict = pre_model.state_dict()
+        pretrained_dict = {k: v for k,v in pretrained_dict.items() if not k.startswith('classifier.6.')}
+        model_dict = model.state_dict()
+        model_dict.update(pretrained_dict)
+        model.load_state_dict(model_dict)
+
     return model

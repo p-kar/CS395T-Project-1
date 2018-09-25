@@ -1,3 +1,4 @@
+import pdb
 import torch.nn as nn
 import math
 import torch.utils.model_zoo as model_zoo
@@ -159,61 +160,101 @@ class ResNet(nn.Module):
         return x
 
 
-def resnet18(pretrained=False, **kwargs):
+def resnet18(pretrained=False, target_type='regression', **kwargs):
     """Constructs a ResNet-18 model.
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
+    model = ResNet(BasicBlock, [2, 2, 2, 2], mode=target_type, **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['resnet18']))
+        pre_model = ResNet(BasicBlock, [2, 2, 2, 2], num_classes=1000)
+        pre_model.load_state_dict(model_zoo.load_url(model_urls['resnet18']))
+
+        pretrained_dict = pre_model.state_dict()
+        pretrained_dict = {k: v for k,v in pretrained_dict.items() if not k.startswith('fc.')}
+        model_dict = model.state_dict()
+        model_dict.update(pretrained_dict)
+        model.load_state_dict(model_dict)
+
     return model
 
 
-def resnet34(pretrained=False, **kwargs):
+def resnet34(pretrained=False, target_type='regression', **kwargs):
     """Constructs a ResNet-34 model.
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = ResNet(BasicBlock, [3, 4, 6, 3], **kwargs)
+    model = ResNet(BasicBlock, [3, 4, 6, 3], mode=target_type, **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['resnet34']))
+        pre_model = ResNet(BasicBlock, [3, 4, 6, 3], num_classes=1000)
+        pre_model.load_state_dict(model_zoo.load_url(model_urls['resnet34']))
+
+        pretrained_dict = pre_model.state_dict()
+        pretrained_dict = {k: v for k,v in pretrained_dict.items() if not k.startswith('fc.')}
+        model_dict = model.state_dict()
+        model_dict.update(pretrained_dict)
+        model.load_state_dict(model_dict)
+
     return model
 
 
-def resnet50(pretrained=False, **kwargs):
+def resnet50(pretrained=False, target_type='regression', **kwargs):
     """Constructs a ResNet-50 model.
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
+    model = ResNet(Bottleneck, [3, 4, 6, 3], mode=target_type, **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['resnet50']))
+        pre_model = ResNet(Bottleneck, [3, 4, 6, 3], num_classes=1000)
+        pre_model.load_state_dict(model_zoo.load_url(model_urls['resnet50']))
+
+        pretrained_dict = pre_model.state_dict()
+        pretrained_dict = {k: v for k,v in pretrained_dict.items() if not k.startswith('fc.')}
+        model_dict = model.state_dict()
+        model_dict.update(pretrained_dict)
+        model.load_state_dict(model_dict)
+
     return model
 
 
-def resnet101(pretrained=False, **kwargs):
+def resnet101(pretrained=False, target_type='regression', **kwargs):
     """Constructs a ResNet-101 model.
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = ResNet(Bottleneck, [3, 4, 23, 3], **kwargs)
+    model = ResNet(Bottleneck, [3, 4, 23, 3], mode=target_type, **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['resnet101']))
+        pre_model = ResNet(Bottleneck, [3, 4, 23, 3], num_classes=1000)
+        pre_model.load_state_dict(model_zoo.load_url(model_urls['resnet101']))
+
+        pretrained_dict = pre_model.state_dict()
+        pretrained_dict = {k: v for k,v in pretrained_dict.items() if not k.startswith('fc.')}
+        model_dict = model.state_dict()
+        model_dict.update(pretrained_dict)
+        model.load_state_dict(model_dict)
+
     return model
 
 
-def resnet152(pretrained=False, **kwargs):
+def resnet152(pretrained=False, target_type='regression', **kwargs):
     """Constructs a ResNet-152 model.
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = ResNet(Bottleneck, [3, 8, 36, 3], **kwargs)
+    model = ResNet(Bottleneck, [3, 8, 36, 3], mode=target_type, **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['resnet152']))
+        pre_model = ResNet(Bottleneck, [3, 8, 36, 3], num_classes=1000)
+        pre_model.load_state_dict(model_zoo.load_url(model_urls['resnet152']))
+
+        pretrained_dict = pre_model.state_dict()
+        pretrained_dict = {k: v for k,v in pretrained_dict.items() if not k.startswith('fc.')}
+        model_dict = model.state_dict()
+        model_dict.update(pretrained_dict)
+        model.load_state_dict(model_dict)
+
     return model

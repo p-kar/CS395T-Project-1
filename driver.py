@@ -14,29 +14,23 @@ import torch.nn.parallel
 import torch.optim
 from torch.utils.data import DataLoader
 
-from models.resnet import ResNet, BasicBlock
-from models.alexnet import AlexNet
+from models.resnet import *
+from models.alexnet import *
 from utils.dataset import YearBookDataset
-from utils.misc import set_random_seeds, get_class_counts
+from utils.misc import set_random_seeds
 from utils.arguments import get_args
 
 use_cuda = torch.cuda.is_available()
 
-def plot_class_hist(opts):
-    cnts = get_class_counts(opts)
-    print (cnts)
-
-def evaluate_model(opts, model, loader, criterion):
+def evaluate_model(opts, model, loader, criterion, l1_criterion):
     model.eval()
 
     time_start = time.time()
     val_loss = 0.0
+    val_l1_norm = 0.0
     num_batches = 0.0
 
     for i, d in enumerate(loader):
-        if opts.target_type == 'regression':
-            d['label'] = d['label'].float()
-            d['label'] = d['label'].unsqueeze(1)
 
         if use_cuda:
             d['image'] = d['image'].cuda()
@@ -45,28 +39,31 @@ def evaluate_model(opts, model, loader, criterion):
         output = model(d['image'])
         loss = criterion(output, d['label'])
 
+        gt_year = d['year'].float()
+        pred_year = torch.round(output * opts.nclasses + loader.dataset.start_date)
+        pred_year = pred_year.view(gt_year.shape)
+        l1_norm = l1_criterion(pred_year, gt_year)
+
         val_loss += loss.data.cpu().item()
+        val_l1_norm += l1_norm.data.cpu().item()
         num_batches += 1
 
     avg_valid_loss = val_loss / num_batches
+    avg_l1_norm = val_l1_norm / num_batches
     time_taken = time.time() - time_start
 
-    return avg_valid_loss, time_taken
+    return avg_valid_loss, avg_l1_norm, time_taken
 
 def train(opts):
 
-    train_dataset = YearBookDataset(opts.data_dir, split='train')
-    valid_dataset = YearBookDataset(opts.data_dir, split='valid')
+    train_dataset = YearBookDataset(opts.data_dir, split='train', nclasses=opts.nclasses, target_type=opts.target_type)
+    valid_dataset = YearBookDataset(opts.data_dir, split='valid', nclasses=opts.nclasses, target_type=opts.target_type)
 
     train_loader = DataLoader(train_dataset, batch_size=opts.bsize, shuffle=opts.shuffle, num_workers=opts.nworkers, pin_memory=True)
     valid_loader = DataLoader(valid_dataset, batch_size=opts.bsize, shuffle=opts.shuffle, num_workers=opts.nworkers, pin_memory=True)
 
-    if opts.arch == 'resnet18':
-        model = ResNet(block=BasicBlock, layers=[2, 2, 2, 2], num_classes=opts.nclasses, mode=opts.target_type)
-    elif opts.arch == 'resnet34':
-        model = ResNet(block=BasicBlock, layers=[3, 4, 6, 3], num_classes=opts.nclasses, mode=opts.target_type)
-    elif opts.arch == 'alexnet':
-        model = AlexNet(num_classes=opts.nclasses, mode=opts.target_type)
+    if opts.arch in ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'alexnet']:
+        model = globals()[opts.arch](pretrained=opts.pretrained, target_type=opts.target_type, num_classes=opts.nclasses)
     else:
         raise NotImplementedError('Unsupported model architecture')
 
@@ -76,6 +73,8 @@ def train(opts):
         criterion = nn.MSELoss()
     else:
         raise NotImplementedError('Unknown model target type')
+
+    l1_criterion = nn.L1Loss()
 
     if use_cuda:
         model = model.cuda()
@@ -93,20 +92,17 @@ def train(opts):
     # for logging
     n_iter = 0
     writer = SummaryWriter(log_dir=opts.log_dir)
-    loss_log = {'train/loss' : 0.0}
+    loss_log = {'train/loss' : 0.0, 'train/l1_norm' : 0.0}
     time_start = time.time()
     num_batches = 0
 
     # for choosing the best model
-    best_val_loss = float('inf')
+    best_val_l1_norm = float('inf')
 
     for epoch in range(opts.start_epoch, opts.epochs):
         model.train()
         scheduler.step()
         for i, d in enumerate(train_loader):
-            if opts.target_type == 'regression':
-                d['label'] = d['label'].float()
-                d['label'] = d['label'].unsqueeze(1)
 
             if use_cuda:
                 d['image'] = d['image'].cuda()
@@ -114,6 +110,11 @@ def train(opts):
 
             output = model(d['image'])
             loss = criterion(output, d['label'])
+
+            gt_year = d['year'].float()
+            pred_year = torch.round(output * opts.nclasses + train_loader.dataset.start_date)
+            pred_year = pred_year.view(gt_year.shape)
+            l1_norm = l1_criterion(pred_year, gt_year)
 
             # perform update
             optimizer.zero_grad()
@@ -125,37 +126,43 @@ def train(opts):
             n_iter += 1
             num_batches += 1
             loss_log['train/loss'] += loss.data.cpu().item()
+            loss_log['train/l1_norm'] += l1_norm.data.cpu().item()
 
             if num_batches != 0 and n_iter % opts.log_iter == 0:
                 time_end = time.time()
                 time_taken = time_end - time_start
                 avg_train_loss = loss_log['train/loss'] / num_batches
+                avg_train_l1_norm = loss_log['train/l1_norm'] / num_batches
 
-                print ("epoch: %d, updates: %d, time: %.2f, avg_train_loss: %.5f" % (epoch, n_iter, time_taken, avg_train_loss))
+                print ("epoch: %d, updates: %d, time: %.2f, avg_train_loss: %.5f, avg_train_l1_norm: %.5f" % (epoch, n_iter, \
+                    time_taken, avg_train_loss, avg_train_l1_norm))
                 # writing values to SummaryWriter
                 writer.add_scalar('train/loss', avg_train_loss, n_iter)
+                writer.add_scalar('train/l1_norm', avg_train_l1_norm, n_iter)
                 # reset values back
-                loss_log = {'train/loss': 0.0}
+                loss_log = {'train/loss' : 0.0, 'train/l1_norm' : 0.0}
                 num_batches = 0.0
                 time_start = time.time()
 
-        val_loss, time_taken = evaluate_model(opts, model, valid_loader, criterion)
-        print ("epoch: %d, updates: %d, time: %.2f, avg_valid_loss: %.5f" % (epoch, n_iter, time_taken, val_loss))
+        val_loss, val_l1_norm, time_taken = evaluate_model(opts, model, valid_loader, criterion)
+        print ("epoch: %d, updates: %d, time: %.2f, avg_valid_loss: %.5f, avg_valid_l1_norm: %.5f" % (epoch, n_iter, \
+                time_taken, val_loss, val_l1_norm))
         # writing values to SummaryWriter
         writer.add_scalar('val/loss', val_loss, n_iter)
+        writer.add_scalar('val/l1_norm', val_l1_norm, n_iter)
         print ('')
 
         # Save the model to disk
-        if val_loss <= best_val_loss:
-            best_val_loss = val_loss
+        if val_l1_norm <= best_val_l1_norm:
+            best_val_l1_norm = val_l1_norm
             save_state = {
                 'epoch': epoch,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
                 'n_iter': n_iter,
                 'opts': opts,
-                'val_loss': val_loss,
-                'best_val_loss': best_val_loss
+                'val_l1_norm': val_l1_norm,
+                'best_val_l1_norm': best_val_l1_norm
             }
             model_path = os.path.join(opts.save_path, 'model_best.net')
             torch.save(save_state, model_path)
@@ -166,8 +173,8 @@ def train(opts):
             'optimizer': optimizer.state_dict(),
             'n_iter': n_iter,
             'opts': opts,
-            'val_loss': val_loss,
-            'best_val_loss': best_val_loss
+            'val_l1_norm': val_l1_norm,
+            'best_val_l1_norm': best_val_l1_norm
         }
         model_path = os.path.join(opts.save_path, 'model_latest.net')
         torch.save(save_state, model_path)
@@ -180,8 +187,6 @@ if __name__ == '__main__':
 
     if opts.mode == 'train':
         train(opts)
-    elif opts.mode == 'class_dist':
-        plot_class_hist(opts)
     else:
         raise NotImplementedError('Unrecognised mode')
 
