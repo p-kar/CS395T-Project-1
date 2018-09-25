@@ -17,10 +17,14 @@ from torch.utils.data import DataLoader
 from models.resnet import ResNet, BasicBlock
 from models.alexnet import AlexNet
 from utils.dataset import YearBookDataset
-from utils.misc import set_random_seeds
+from utils.misc import set_random_seeds, get_class_counts
 from utils.arguments import get_args
 
 use_cuda = torch.cuda.is_available()
+
+def plot_class_hist(opts):
+    cnts = get_class_counts(opts)
+    print (cnts)
 
 def evaluate_model(opts, model, loader, criterion):
     model.eval()
@@ -31,7 +35,7 @@ def evaluate_model(opts, model, loader, criterion):
 
     for i, d in enumerate(loader):
         if opts.target_type == 'regression':
-            d['label'] = d['label'].float() / opts.nclasses
+            d['label'] = d['label'].float()
             d['label'] = d['label'].unsqueeze(1)
 
         if use_cuda:
@@ -101,7 +105,7 @@ def train(opts):
         scheduler.step()
         for i, d in enumerate(train_loader):
             if opts.target_type == 'regression':
-                d['label'] = d['label'].float() / opts.nclasses
+                d['label'] = d['label'].float()
                 d['label'] = d['label'].unsqueeze(1)
 
             if use_cuda:
@@ -176,6 +180,8 @@ if __name__ == '__main__':
 
     if opts.mode == 'train':
         train(opts)
+    elif opts.mode == 'class_dist':
+        plot_class_hist(opts)
     else:
         raise NotImplementedError('Unrecognised mode')
 

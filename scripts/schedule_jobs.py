@@ -2,7 +2,7 @@ import os
 import pdb
 import subprocess as sp
 
-OUTPUT_ROOT='/scratch/cluster/pkar/CS395T-Project-1/runs/'
+OUTPUT_ROOT='/scratch/cluster/pkar/CS395T-Project-1/runs/regress_no_normalize_epochs_140_decay_70_lr_3e-4'
 SCRIPT_ROOT='/scratch/cluster/pkar/CS395T-Project-1/scripts/'
 
 mapping_dict = {
@@ -17,15 +17,15 @@ mapping_dict = {
     '__BSIZE__': '32',
     '__SHUFFLE__': 'True',
     '__NCLASSES__': '120',
-    '__ARCH__': ['resnet18', 'resnet18', 'resnet34', 'resnet34', 'alexnet', 'alexnet'],
-    '__TARGET_TYPE__': ['classification', 'regression', 'classification', 'regression', 'classification', 'regression'],
+    '__ARCH__': ['resnet18', 'resnet34', 'alexnet'],
+    '__TARGET_TYPE__': ['regression', 'regression', 'regression'],
     '__OPTIM__': 'adam',
-    '__LR__': '1e-3',
+    '__LR__': '3e-4',
     '__WD__': '1e-4',
     '__MOMENTUM__': '0.9',
-    '__EPOCHS__': '90',
+    '__EPOCHS__': '140',
     '__MAX_NORM__': '1',
-    '__LR_DECAY_STEP__': '45',
+    '__LR_DECAY_STEP__': '70',
     '__LR_DECAY_GAMMA__': '0.1',
     '__START_EPOCH__': '0',
     '__LOG_ITER__': '10',
