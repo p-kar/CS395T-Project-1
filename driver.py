@@ -30,23 +30,25 @@ def evaluate_model(opts, model, loader, criterion, l1_criterion):
     val_l1_norm = 0.0
     num_batches = 0.0
 
-    for i, d in enumerate(loader):
+    with torch.no_grad():
+        for i, d in enumerate(loader):
 
-        if use_cuda:
-            d['image'] = d['image'].cuda()
-            d['label'] = d['label'].cuda()
+            if use_cuda:
+                d['image'] = d['image'].cuda()
+                d['label'] = d['label'].cuda()
+                d['year'] = d['year'].cuda()
 
-        output = model(d['image'])
-        loss = criterion(output, d['label'])
+            output = model(d['image'])
+            loss = criterion(output, d['label'])
 
-        gt_year = d['year'].float()
-        pred_year = torch.round(output * opts.nclasses + loader.dataset.start_date)
-        pred_year = pred_year.view(gt_year.shape)
-        l1_norm = l1_criterion(pred_year, gt_year)
+            gt_year = d['year'].float()
+            pred_year = torch.round(output * opts.nclasses + loader.dataset.start_date)
+            pred_year = pred_year.view(gt_year.shape)
+            l1_norm = l1_criterion(pred_year, gt_year)
 
-        val_loss += loss.data.cpu().item()
-        val_l1_norm += l1_norm.data.cpu().item()
-        num_batches += 1
+            val_loss += loss.data.cpu().item()
+            val_l1_norm += l1_norm.data.cpu().item()
+            num_batches += 1
 
     avg_valid_loss = val_loss / num_batches
     avg_l1_norm = val_l1_norm / num_batches
@@ -107,6 +109,7 @@ def train(opts):
             if use_cuda:
                 d['image'] = d['image'].cuda()
                 d['label'] = d['label'].cuda()
+                d['year'] = d['year'].cuda()
 
             output = model(d['image'])
             loss = criterion(output, d['label'])
@@ -144,7 +147,7 @@ def train(opts):
                 num_batches = 0.0
                 time_start = time.time()
 
-        val_loss, val_l1_norm, time_taken = evaluate_model(opts, model, valid_loader, criterion)
+        val_loss, val_l1_norm, time_taken = evaluate_model(opts, model, valid_loader, criterion, l1_criterion)
         print ("epoch: %d, updates: %d, time: %.2f, avg_valid_loss: %.5f, avg_valid_l1_norm: %.5f" % (epoch, n_iter, \
                 time_taken, val_loss, val_l1_norm))
         # writing values to SummaryWriter

@@ -10,6 +10,7 @@ python -u $code_root/driver.py \
 	--nclasses __NCLASSES__ \
 	--arch __ARCH__ \
 	--target_type __TARGET_TYPE__ \
+	--pretrained __PRETRAINED__ \
 	--optim __OPTIM__ \
 	--lr __LR__ \
 	--wd __WD__ \
