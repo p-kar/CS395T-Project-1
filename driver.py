@@ -16,6 +16,7 @@ from torch.utils.data import DataLoader
 
 from models.resnet import *
 from models.alexnet import *
+from models.xception import *
 from utils.dataset import YearBookDataset
 from utils.misc import set_random_seeds
 from utils.arguments import get_args
@@ -64,7 +65,7 @@ def train(opts):
     train_loader = DataLoader(train_dataset, batch_size=opts.bsize, shuffle=opts.shuffle, num_workers=opts.nworkers, pin_memory=True)
     valid_loader = DataLoader(valid_dataset, batch_size=opts.bsize, shuffle=opts.shuffle, num_workers=opts.nworkers, pin_memory=True)
 
-    if opts.arch in ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'alexnet']:
+    if opts.arch in ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'alexnet', 'xception']:
         model = globals()[opts.arch](pretrained=opts.pretrained, target_type=opts.target_type, num_classes=opts.nclasses)
     else:
         raise NotImplementedError('Unsupported model architecture')
