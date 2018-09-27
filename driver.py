@@ -89,7 +89,7 @@ def train(opts):
         optimizer = torch.optim.SGD(model.parameters(), opts.lr, momentum=opts.momentum, weight_decay=opts.wd)
     else:
         raise NotImplementedError('Unknown optimizer type')
-
+    
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=opts.lr_decay_step, gamma=opts.lr_decay_gamma)
 
     # for logging

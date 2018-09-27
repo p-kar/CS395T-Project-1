@@ -2,7 +2,7 @@ import os
 import pdb
 import subprocess as sp
 
-OUTPUT_ROOT='/scratch/cluster/pkar/CS395T-Project-1/runs/pretrained_lr_3e-4_epochs_40_decay_20'
+OUTPUT_ROOT='/scratch/cluster/pkar/CS395T-Project-1/runs/pretrained_lr_1e-4_epochs_40_decay_20'
 SCRIPT_ROOT='/scratch/cluster/pkar/CS395T-Project-1/scripts/'
 
 mapping_dict = {
@@ -10,7 +10,7 @@ mapping_dict = {
     '__EMAILID__': 'pkar@cs.utexas.edu',
     '__PROJECT__': 'INSTRUCTIONAL',
     # Script parameters
-    '__JOBNAME__': ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'alexnet'],
+    '__JOBNAME__': ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'alexnet', 'xception'],
     # Algorithm hyperparameters
     '__CODE_ROOT__': '/scratch/cluster/pkar/CS395T-Project-1',
     '__MODE__': 'train',
@@ -19,11 +19,11 @@ mapping_dict = {
     '__BSIZE__': '32',
     '__SHUFFLE__': 'True',
     '__NCLASSES__': '120',
-    '__ARCH__': ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'alexnet'],
-    '__TARGET_TYPE__': ['regression', 'regression', 'regression', 'regression', 'regression', 'regression'],
+    '__ARCH__': ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'alexnet', 'xception'],
+    '__TARGET_TYPE__': ['regression', 'regression', 'regression', 'regression', 'regression', 'regression', 'regression'],
     '__PRETRAINED__': 'True',
     '__OPTIM__': 'adam',
-    '__LR__': '3e-4',
+    '__LR__': '1e-4',
     '__WD__': '1e-4',
     '__MOMENTUM__': '0.9',
     '__EPOCHS__': '40',
@@ -48,6 +48,10 @@ for key, value in mapping_dict.items():
 for idx in range(num_jobs):
     job_name = mapping_dict['__JOBNAME__'][idx]
     mapping_dict['__LOGNAME__'] = os.path.join(OUTPUT_ROOT, job_name)
+    if os.path.isdir(mapping_dict['__LOGNAME__']):
+        print ('Skipping job ', mapping_dict['__LOGNAME__'], ' directory exists')
+        continue
+
     mapping_dict['__LOG_DIR__'] = mapping_dict['__LOGNAME__']
     mapping_dict['__SAVE_PATH__'] = mapping_dict['__LOGNAME__']
     sp.call('mkdir %s'%(mapping_dict['__LOGNAME__']), shell=True)
