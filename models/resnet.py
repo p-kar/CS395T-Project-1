@@ -96,9 +96,15 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, block, layers, num_classes=1000, mode='classification'):
+    def __init__(self, block, layers, num_classes=1000, mode='classification', img_size=224):
         self.inplanes = 64
         super(ResNet, self).__init__()
+
+        if img_size % 32 != 0:
+            raise ValueError('Image size should be a multiple of 32')
+
+        self.avg_pool_size = img_size // 32
+
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
                                bias=False)
         self.bn1 = nn.BatchNorm2d(64)
@@ -108,7 +114,7 @@ class ResNet(nn.Module):
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
-        self.avgpool = nn.AvgPool2d(7, stride=1)
+        self.avgpool = nn.AvgPool2d(self.avg_pool_size, stride=1)
 
         if mode not in ['classification', 'regression']:
             raise NotImplementedError('Unrecognized model mode')

@@ -19,6 +19,8 @@ def get_args():
     parser.add_argument('--bsize', default=32, type=int, help='mini-batch size (default: 32)')
     parser.add_argument('--shuffle', default='True', type=str2bool, help='shuffle the data?')
     parser.add_argument('--nclasses', default=120, type=int, help='Number of classes in the dataset')
+    parser.add_argument('--resize', default=False, type=str2bool, help='Resize image to ImageNet resolution')
+    parser.add_argument('--img_size', default=160, type=int, help='Size for the square crop')
 
     # Model Parameters
     parser.add_argument('--arch', default='resnet18', type=str, help='model architecture one of [resnet(18|34|50|101|152), alexnet]')

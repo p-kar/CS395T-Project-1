@@ -18,7 +18,7 @@ def readFile(fname):
 class YearBookDataset(Dataset):
 	"""Yearbook Dataset"""
 
-	def __init__(self, root_dir, split='train', start_date=1900, img_size=171, nclasses=120, target_type='regression'):
+	def __init__(self, root_dir, split='train', start_date=1900, img_size=171, nclasses=120, resize=True, target_type='regression'):
 		"""
 		Args:
 			root_dir: Path to the root directory
@@ -35,10 +35,16 @@ class YearBookDataset(Dataset):
 		self.nclasses = nclasses
 		self.target_type = target_type
 
-		if split in ['train', 'valid']:
-			self.transform = transforms.Compose([RandomCrop(img_size), Scale(224), RandomHorizontalFlip(), ToTensor()])
+		if resize:
+			if split in ['train', 'valid']:
+				self.transform = transforms.Compose([RandomCrop(img_size), Scale(224), RandomHorizontalFlip(), ToTensor()])
+			else:
+				self.transform = transforms.Compose([CenterCrop(img_size), Scale(224), ToTensor()])
 		else:
-			self.transform = transforms.Compose([CenterCrop(img_size), Scale(224), ToTensor()])
+			if split in ['train', 'valid']:
+				self.transform = transforms.Compose([RandomCrop(img_size), RandomHorizontalFlip(), ToTensor()])
+			else:
+				self.transform = transforms.Compose([CenterCrop(img_size), ToTensor()])
 
 	def __len__(self):
 		return len(self.annotations)
