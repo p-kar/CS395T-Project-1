@@ -17,6 +17,7 @@ from torch.utils.data import DataLoader
 from models.resnet import *
 from models.alexnet import *
 from models.xception import *
+from models.se_resnet import senet50
 from utils.dataset import YearBookDataset
 from utils.misc import set_random_seeds
 from utils.arguments import get_args
@@ -59,13 +60,18 @@ def evaluate_model(opts, model, loader, criterion, l1_criterion):
 
 def train(opts):
 
-    train_dataset = YearBookDataset(opts.data_dir, split='train', nclasses=opts.nclasses, target_type=opts.target_type)
-    valid_dataset = YearBookDataset(opts.data_dir, split='valid', nclasses=opts.nclasses, target_type=opts.target_type)
+    train_dataset = YearBookDataset(opts.data_dir, split='train', nclasses=opts.nclasses, target_type=opts.target_type, \
+        img_size=opts.img_size, resize=opts.resize)
+    valid_dataset = YearBookDataset(opts.data_dir, split='valid', nclasses=opts.nclasses, target_type=opts.target_type, \
+        img_size=opts.img_size, resize=opts.resize)
 
     train_loader = DataLoader(train_dataset, batch_size=opts.bsize, shuffle=opts.shuffle, num_workers=opts.nworkers, pin_memory=True)
     valid_loader = DataLoader(valid_dataset, batch_size=opts.bsize, shuffle=opts.shuffle, num_workers=opts.nworkers, pin_memory=True)
 
-    if opts.arch in ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'alexnet', 'xception']:
+    if opts.arch in ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152']:
+        model = globals()[opts.arch](pretrained=opts.pretrained, target_type=opts.target_type, num_classes=opts.nclasses, \
+            img_size=opts.img_size)
+    elif opts.arch in ['alexnet', 'xception', 'senet50']:
         model = globals()[opts.arch](pretrained=opts.pretrained, target_type=opts.target_type, num_classes=opts.nclasses)
     else:
         raise NotImplementedError('Unsupported model architecture')
