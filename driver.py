@@ -44,8 +44,15 @@ def evaluate_model(opts, model, loader, criterion, l1_criterion):
             loss = criterion(output, d['label'])
 
             gt_year = d['year'].float()
-            pred_year = torch.round(output * opts.nclasses + loader.dataset.start_date)
-            pred_year = pred_year.view(gt_year.shape)
+
+            if opts.target_type == 'regression':
+                pred_year = torch.round(output * opts.nclasses + loader.dataset.start_date)
+                pred_year = pred_year.view(gt_year.shape)
+            elif opts.target_type == 'classification':
+                _, pred_year = torch.max(output, 1)
+                pred_year = pred_year.float() + loader.dataset.start_date
+                pred_year = pred_year.view(gt_year.shape)
+
             l1_norm = l1_criterion(pred_year, gt_year)
 
             val_loss += loss.data.cpu().item()
@@ -122,8 +129,15 @@ def train(opts):
             loss = criterion(output, d['label'])
 
             gt_year = d['year'].float()
-            pred_year = torch.round(output * opts.nclasses + train_loader.dataset.start_date)
-            pred_year = pred_year.view(gt_year.shape)
+
+            if opts.target_type == 'regression':
+                pred_year = torch.round(output * opts.nclasses + train_loader.dataset.start_date)
+                pred_year = pred_year.view(gt_year.shape)
+            elif opts.target_type == 'classification':
+                _, pred_year = torch.max(output, 1)
+                pred_year = pred_year.float() + train_loader.dataset.start_date
+                pred_year = pred_year.view(gt_year.shape)
+
             l1_norm = l1_criterion(pred_year, gt_year)
 
             # perform update

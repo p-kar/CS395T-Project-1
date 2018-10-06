@@ -2,7 +2,7 @@ import os
 import pdb
 import subprocess as sp
 
-OUTPUT_ROOT='/scratch/cluster/pkar/CS395T-Project-1/runs/pretrained_lr_1e-4_epochs_40_decay_20'
+OUTPUT_ROOT='/scratch/cluster/pkar/CS395T-Project-1/runs/class_pretrained_cropped_lr_1e-4_wd_4e-5_epochs_40_decay_20'
 SCRIPT_ROOT='/scratch/cluster/pkar/CS395T-Project-1/scripts/'
 
 mapping_dict = {
@@ -10,7 +10,7 @@ mapping_dict = {
     '__EMAILID__': 'pkar@cs.utexas.edu',
     '__PROJECT__': 'INSTRUCTIONAL',
     # Script parameters
-    '__JOBNAME__': ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'alexnet', 'xception'],
+    '__JOBNAME__': ['alexnet', 'resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152'],
     # Algorithm hyperparameters
     '__CODE_ROOT__': '/scratch/cluster/pkar/CS395T-Project-1',
     '__MODE__': 'train',
@@ -19,12 +19,14 @@ mapping_dict = {
     '__BSIZE__': '32',
     '__SHUFFLE__': 'True',
     '__NCLASSES__': '120',
-    '__ARCH__': ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'alexnet', 'xception'],
-    '__TARGET_TYPE__': ['regression', 'regression', 'regression', 'regression', 'regression', 'regression', 'regression'],
+    '__RESIZE__': 'False',
+    '__IMG_SIZE__': '160',
+    '__ARCH__': ['alexnet', 'resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152'],
+    '__TARGET_TYPE__': ['classification', 'classification', 'classification', 'classification', 'classification', 'classification'],
     '__PRETRAINED__': 'True',
     '__OPTIM__': 'adam',
     '__LR__': '1e-4',
-    '__WD__': '1e-4',
+    '__WD__': '4e-5',
     '__MOMENTUM__': '0.9',
     '__EPOCHS__': '40',
     '__MAX_NORM__': '1',

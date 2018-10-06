@@ -8,6 +8,8 @@ python -u $code_root/driver.py \
 	--bsize __BSIZE__ \
 	--shuffle __SHUFFLE__ \
 	--nclasses __NCLASSES__ \
+	--resize __RESIZE__ \
+	--img_size __IMG_SIZE__ \
 	--arch __ARCH__ \
 	--target_type __TARGET_TYPE__ \
 	--pretrained __PRETRAINED__ \
