@@ -24,9 +24,41 @@ from utils.dataset import YearBookDataset
 from utils.misc import set_random_seeds
 from utils.arguments import get_args
 
+from keras.applications.xception import (
+    Xception, preprocess_input, decode_predictions
+)
+from keras.preprocessing import image
+import keras.models as kmodels
+from keras import backend
+import numpy as np
+
 use_cuda = torch.cuda.is_available()
 
-def evaluate_ensemble_model(opts, models, loader, criterion, l1_criterion):
+def l1_norm(y_true, y_pred):
+    year_true = (y_true * 104) + 1905
+    year_pred = (y_pred * 104) + 1905
+    return backend.sqrt(backend.mean(backend.square(year_pred - year_true), axis=-1))
+
+def get_xception_output(xception_model, data):
+
+    res = []
+
+    for path in data['image_name']:
+        img = image.load_img(path, target_size=(299, 299))
+        x = image.img_to_array(img)
+        x = np.expand_dims(x, axis=0)
+        x = preprocess_input(x)
+        pred = xception_model.predict(x)
+        result = [int(round((x * 104) + 1905)) for x in pred]
+        res.extend(result)
+
+    ret = torch.FloatTensor(res)
+    if use_cuda:
+        ret = ret.cuda()
+
+    return ret
+
+def evaluate_ensemble_model(opts, models, xception_model, loader, criterion, l1_criterion):
     for model in models:
         model.eval()
 
@@ -65,6 +97,11 @@ def evaluate_ensemble_model(opts, models, loader, criterion, l1_criterion):
                 pred_year = pred_year.float() + loader.dataset.start_date
                 pred_year = pred_year.view(gt_year.shape)
 
+            xception_out = get_xception_output(xception_model, d)
+            xception_out.view(gt_year.shape)
+
+            pred_year = (pred_year + xception_out) / 2.0
+
             l1_norm = l1_criterion(pred_year, gt_year)
 
             val_loss += loss.data.cpu().item()
@@ -91,6 +128,8 @@ if __name__ == '__main__':
         else:
             models.append(load_model(os.path.join(opts.ensemble_dir, path)).cuda())
 
+    xception_model = kmodels.load_model(os.path.join(opts.ensemble_dir, 'xception.h5'), custom_objects={'l1_norm': l1_norm})
+
     valid_dataset = YearBookDataset(opts.data_dir, split='valid', nclasses=opts.nclasses, target_type=opts.target_type, \
         img_size=opts.img_size, resize=opts.resize)
     valid_loader = DataLoader(valid_dataset, batch_size=opts.bsize, shuffle=opts.shuffle, num_workers=opts.nworkers, pin_memory=True)
@@ -104,7 +143,7 @@ if __name__ == '__main__':
 
     l1_criterion = nn.L1Loss()
 
-    pdb.set_trace()
+    avg_valid_loss, avg_l1_norm, time_taken = evaluate_ensemble_model(opts, models, xception_model, valid_loader, criterion, l1_criterion)
 
-    avg_valid_loss, avg_l1_norm, time_taken = evaluate_ensemble_model(opts, models, valid_loader, criterion, l1_criterion)
+    print ("time: %.2f, avg_valid_loss: %.5f, avg_valid_l1_norm: %.5f" % (time_taken, avg_valid_loss, avg_l1_norm))
 
