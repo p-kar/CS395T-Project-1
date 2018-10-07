@@ -26,6 +26,8 @@ def get_args():
     parser.add_argument('--arch', default='resnet18', type=str, help='model architecture one of [resnet(18|34|50|101|152), alexnet]')
     parser.add_argument('--target_type', default='regression', type=str, help='target is classification or regression')
     parser.add_argument('--pretrained', default='True', type=str2bool, help='use ImageNet pretrained model for finetuning')
+    parser.add_argument('--load_model', default='trained_models/model_best.net', type=str, help='Used for evaluation')
+    parser.add_argument('--ensemble_dir', default='trained_models/ensemble', type=str, help='Dir where all ensemble models are saved')
 
     # Optimization Parameters
     parser.add_argument('--optim', default='adam', type=str, help='Optimizer type')
