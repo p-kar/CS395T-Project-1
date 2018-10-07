@@ -165,6 +165,29 @@ class ResNet(nn.Module):
 
         return x
 
+    def saliency(self, x, gt_label):
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
+
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+
+        # 1 x 512 x 5 x 5 -> 512 x 5 x 5 -> 5 x 5 x 512
+        filters = x.squeeze().transpose(0, 2)
+        # 5 x 5 x 512
+        filters = filters * self.fc.weight[gt_label]
+        # 5 x 5
+        filters = filters.sum(2)
+
+        x = self.avgpool(x)
+        x = x.view(x.size(0), -1)
+
+        return filters
+
 
 def resnet18(pretrained=False, target_type='regression', **kwargs):
     """Constructs a ResNet-18 model.
